@@ -7,16 +7,16 @@ import {
 
 /* ---------- mock data (เปลี่ยนเป็นเรียก API ภายหลัง) ---------- */
 const groups = [
-  { id: 'hair', name: { th: 'บริการผม', en: 'Hair Service' } },
-  { id: 'nail', name: { th: 'บริการเล็บ', en: 'Nail Service' } },
-  { id: 'beauty', name: { th: 'บริการความงาม', en: 'Beauty Service' } },
+  { id: 'hair', name: { th: 'บริการผม', en: 'Hair Services' } },
+  { id: 'nail', name: { th: 'บริการเล็บ', en: 'Nail Services' } },
+  { id: 'beauty', name: { th: 'บริการความงาม', en: 'Beauty Services' } },
 ]
 // duration = ระยะเวลาใช้บริการ (นาที), slots = ชุดช่วงเวลา (ดู slotSets ด้านล่าง)
 const services = [
-  { id: 'shampoo-dry', group: 'hair', duration: 90, slots: 'standard', name: { th: 'สระผม + ไดร์', en: 'Shampoo & Blow Dry' } },
-  { id: 'hair-treatment', group: 'hair', duration: 90, slots: 'standard', name: { th: 'สระผม + ทรีทเมนต์ + นวดศีรษะ + ไดร์', en: 'Shampoo & Hair Treatment' } },
-  { id: 'scalp-scrub', group: 'hair', duration: 90, slots: 'standard', name: { th: 'สระผม + สครับหนังศีรษะ + นวดศีรษะ + ไดร์', en: 'Scalp Scrub & Massage' } },
-  { id: 'gel-polish', group: 'nail', duration: 90, slots: 'standard', name: { th: 'ทาสีเจล', en: 'Gel Polish' } },
+  { id: 'shampoo-dry', group: 'hair', duration: 90, slots: 'standard', name: { th: 'สระผม + จัดแต่งทรงผม (ไดร์ผม,ลอนผม,หนีบตรง)', en: 'Shampoo & Styling – Shampooing and hairstyling (blow-dry, curling, or straightening)' } },
+  { id: 'hair-treatment', group: 'hair', duration: 90, slots: 'standard', name: { th: 'สระผม + ทรีทเมนต์ + นวดศีรษะ + จัดแต่งทรงผม (ไดร์ผม,ลอนผม,หนีบตรง)', en: 'Hair Treatment & Styling – Shampooing, hair treatment, scalp massage, and hairstyling (blow-dry, curling, or straightening)' } },
+  { id: 'scalp-scrub', group: 'hair', duration: 90, slots: 'standard', name: { th: 'สระผม + สครับหนังศีรษะ + นวดศีรษะ + จัดแต่งทรงผม (ไดร์ผม,ลอนผม,หนีบตรง)', en: 'Scalp Scrub Massage & Styling – Shampooing, scalp exfoliation, scalp massage, and hairstyling (blow-dry, curling, or straightening)' } },
+  { id: 'gel-polish', group: 'nail', duration: 90, slots: 'standard', name: { th: 'ทาสีเจลสีพื้น', en: 'Gel Polish (Solid Color) – Application of solid-color gel nail polish' } },
   { id: 'nail-spa', group: 'nail', duration: 90, slots: 'standard', name: { th: 'สครับ + มาสก์ + นวด + ขัดเงา', en: 'Nail Spa & Shine' } },
   { id: 'pca', group: 'beauty', duration: 60, slots: 'pca', name: { th: 'วิเคราะห์สีส่วนบุคคล', en: 'Personal Color Analysis' } },
 ]
@@ -63,9 +63,10 @@ const messages = {
     errConsent: 'กรุณาเลือกว่ายินยอมหรือไม่', errConsentNo: 'ไม่สามารถจองได้หากไม่ยินยอมเข้ารับการบริการ',
     timeText: (a, b) => `เวลา ${a} - ${b} น.`,
     info: ['กรุณากรอกข้อมูลให้ครบถ้วน', 'เลือกบริการที่ต้องการ', 'เลือกวันที่และช่วงเวลาที่สะดวก',
-      'ระบบจะแสดงระยะเวลาที่ใช้บริการโดยอัตโนมัติ', 'หลังยืนยันการจอง คุณจะได้รับการยืนยันทางอีเมล/เบอร์โทรศัพท์'],
+      'ระบบจะแสดงระยะเวลาที่ใช้บริการโดยอัตโนมัติ', 'หลังยืนยันการจอง คุณจะได้รับการยืนยันทางอีเมล/เบอร์โทรศัพท์', 'แนะนำให้ลูกค้ามาถึงก่อนเวลานัด 5–10 นาที'],
     errName: 'กรุณากรอกชื่อ-สกุล', errPhone: 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง', errEmail: 'รูปแบบอีเมลไม่ถูกต้อง',
     errService: 'กรุณาเลือกบริการ', errDate: 'กรุณาเลือกวันที่', errSlot: 'กรุณาเลือกช่วงเวลา',
+    cancelTitle: 'การยกเลิกการจอง', cancelText: 'หากต้องการยกเลิก กรุณาโทรแจ้งร้านล่วงหน้าอย่างน้อย 24 ชั่วโมง', contactLabel: 'เบอร์ติดต่อ', arriveTip: 'แนะนำให้ลูกค้ามาถึงก่อนเวลานัด 5–10 นาที',
   },
   en: {
     title: 'BTT Beauty Space', subtitle: 'Fill in your details to book a service',
@@ -82,11 +83,14 @@ const messages = {
     errConsent: 'Please choose whether you consent', errConsentNo: 'Booking cannot proceed without your consent',
     timeText: (a, b) => `${a} - ${b}`,
     info: ['Fill in all required fields', 'Choose the service you want', 'Pick a date and a time that suits you',
-      'The service duration is shown automatically', "After you confirm, you'll receive confirmation by email or phone"],
+      'The service duration is shown automatically', "After you confirm, you'll receive confirmation by email or phone", 'We recommend arriving 5–10 minutes before your appointment'],
     errName: 'Please enter your full name', errPhone: 'Please enter a valid phone number', errEmail: 'Email format is not valid',
     errService: 'Please select a service', errDate: 'Please select a date', errSlot: 'Please select a time',
+    cancelTitle: 'Cancellation', cancelText: 'To cancel, please call the shop at least 24 hours in advance.', contactLabel: 'Contact', arriveTip: 'We recommend arriving 5–10 minutes before your appointment',
   },
 }
+const shopPhone = '099-999-999'
+const shopPhoneHref = `tel:${shopPhone.replace(/-/g, '')}`
 const savedLang = (() => { try { return localStorage.getItem('lang') } catch { return null } })()
 const lang = ref(savedLang in messages ? savedLang : 'th')
 const t = (k) => messages[lang.value][k]
@@ -191,6 +195,11 @@ function reset() {
           <p class="muted">
             {{ services.find((s) => s.id === form.serviceId)?.name[lang] }}<br />
             {{ dateText }} · {{ t('timeText')(selectedSlot?.start, selectedSlot?.end) }}
+          </p>
+          <p class="cancel-note">
+            {{ t('arriveTip') }}<br />
+            {{ t('cancelText') }}<br />
+            <a :href="shopPhoneHref">{{ t('contactLabel') }} {{ shopPhone }}</a>
           </p>
           <button class="btn inline" type="button" @click="reset">{{ t('again') }}</button>
         </div>
@@ -327,6 +336,11 @@ function reset() {
         <ul>
           <li v-for="(line, i) in t('info')" :key="line" :style="{ '--i': i }">{{ line }}</li>
         </ul>
+        <div class="cancel">
+          <strong>{{ t('cancelTitle') }}</strong>
+          <p>{{ t('cancelText') }}</p>
+          <a :href="shopPhoneHref"><Phone :size="16" /> {{ t('contactLabel') }} {{ shopPhone }}</a>
+        </div>
       </aside>
     </main>
   </div>
@@ -421,6 +435,13 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
 .info li { position: relative; padding-left: 22px; }
 .info li::before { content: ''; position: absolute; left: 4px; top: .6em; width: 7px; height: 7px; border-radius: 50%; background: var(--brand); }
 
+.cancel { margin-top: 20px; padding-top: 18px; border-top: 1px dashed #f1b6d3; color: #5b4553; font-size: .92rem; }
+.cancel strong { color: var(--ink); }
+.cancel p { margin: 6px 0 10px; }
+.cancel a, .cancel-note a { display: inline-flex; align-items: center; gap: 6px; color: var(--brand-dark); font-weight: 600; text-decoration: none; }
+.cancel a:hover, .cancel-note a:hover { text-decoration: underline; }
+.cancel-note { margin: 4px 0 0; padding: 12px 16px; border-radius: 12px; background: var(--brand-soft); color: #5b4553; font-size: .9rem; }
+
 .success { display: grid; justify-items: center; gap: 10px; padding: 56px 0; text-align: center; }
 .success h2 { margin: 8px 0 0; }
 .tick { display: grid; place-items: center; width: 68px; height: 68px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); }
@@ -482,6 +503,7 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
 .success > :nth-child(2) { animation-delay: .25s; }
 .success > :nth-child(3) { animation-delay: .32s; }
 .success > :nth-child(4) { animation-delay: .4s; }
+.success > :nth-child(5) { animation-delay: .48s; }
 .tick { position: relative; animation: pop .5s .1s cubic-bezier(.3, 1.4, .5, 1) both; }
 .tick::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--brand); animation: ring .9s .45s ease-out both; }
 
