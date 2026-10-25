@@ -351,8 +351,9 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
   --line: #f0dbe6; --danger: #d92d20;
   min-height: 100vh; padding: 32px 20px 56px; color: var(--ink); text-align: left;
   font-family: 'Noto Sans Thai', 'Sarabun', system-ui, sans-serif; line-height: 1.55;
+  box-sizing: border-box; overflow-x: clip; /* กันเนื้อหาดันความกว้างหน้าจอ */
 }
-.header, .layout { max-width: 1080px; margin-inline: auto; }
+.header, .layout { max-width: 1080px; margin-inline: auto; box-sizing: border-box; width: 100%; }
 .card { background: #fff; border-radius: 16px; padding: 28px 32px; box-shadow: 0 1px 2px rgba(43, 26, 38, .05), 0 8px 24px rgba(43, 26, 38, .05); }
 .muted, .hint { margin: 0; color: var(--muted); font-size: .9rem; }
 
@@ -366,19 +367,20 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
 .logo { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #ff5cad, var(--brand)); }
 
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+.layout > section, .layout > aside { min-width: 0; }
 .info { position: sticky; top: 24px; background: var(--brand-soft); box-shadow: none; }
 
 .section-title { margin: 0 0 20px; font-size: 1.15rem; font-weight: 700; }
 .section-title.gap { margin-top: 12px; padding-top: 24px; border-top: 1px solid var(--line); }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
-.field { display: grid; gap: 8px; margin-bottom: 18px; align-content: start; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 20px; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-bottom: 18px; align-content: start; min-width: 0; }
 .label { font-weight: 600; font-size: .95rem; }
 .label b { color: var(--danger); margin-left: 2px; }
 
 .input {
   display: flex; align-items: center; gap: 12px; padding: 0 16px; min-height: 50px;
   border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--muted);
-  transition: border-color .15s, box-shadow .15s;
+  transition: border-color .15s, box-shadow .15s; min-width: 0;
 }
 .input:hover { border-color: #e4c3d3; }
 .input:focus-within { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(255, 20, 147, .15); color: var(--brand); }
@@ -389,7 +391,7 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
 }
 .input input[type='date'] { color-scheme: light; cursor: pointer; }
 .input textarea { resize: vertical; min-height: 64px; }
-.input select { appearance: none; cursor: pointer; min-height: 48px; text-overflow: ellipsis; }
+.input select { appearance: none; cursor: pointer; min-height: 48px; text-overflow: ellipsis; max-width: 100%; }
 .input select:disabled { cursor: not-allowed; }
 .input input::placeholder, .input textarea::placeholder { color: #b9a6b1; }
 .err { color: var(--danger); font-size: .85rem; }
@@ -493,7 +495,7 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
 .page button { -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 860px) {
-  .layout { grid-template-columns: 1fr; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
   .info { position: static; }
   .card { padding: 24px 22px; }
 }
@@ -514,15 +516,15 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
   .lang > svg { display: none; }
   .thumb, .lang button { width: 44px; }
   .lang button { min-height: 32px; font-size: .85rem; }
-  .row2 { grid-template-columns: 1fr; }
+  .row2 { grid-template-columns: minmax(0, 1fr); }
   .section-title { font-size: 1.05rem; margin-bottom: 16px; }
   .section-title.gap { margin-top: 4px; padding-top: 20px; }
   .field { margin-bottom: 16px; }
   .duration { padding: 14px 16px; gap: 12px; margin-bottom: 20px; }
   .d-label { font-size: .92rem; gap: 8px; }
   .d-value { white-space: nowrap; }
-  .btn[type='submit'] { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 5; }
+  /* เอา sticky ออก: ปุ่มอยู่ท้ายฟอร์ม ไม่บังช่องกรอก */
   .success { padding: 36px 0; }
   .info ul { font-size: .92rem; }
-} 
+}
 </style>
