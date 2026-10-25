@@ -524,5 +524,5 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
   .btn[type='submit'] { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 5; }
   .success { padding: 36px 0; }
   .info ul { font-size: .92rem; }
-}
+} 
 </style>
