@@ -33,7 +33,7 @@ const picks = [
     { v: '25-34', th: '25 – 34 ปี', en: '25 – 34' },
     { v: '35-44', th: '35 – 44 ปี', en: '35 – 44' },
     { v: '45-54', th: '45 – 54 ปี', en: '45 – 54' },
-    { v: '55-59', th: '55 – 59 ปี', en: '55 – 59' },
+    { v: 'over-55', th: 'มากกว่า 55 ปี', en: 'Over 55' },
   ] },
   { key: 'status', label: 'status', ph: 'statusPh', icon: GraduationCap, options: [
     { v: 'student', th: 'นักศึกษา', en: 'Student' },
@@ -61,7 +61,7 @@ const messages = {
     genderPh: 'กรุณาเลือกเพศ', agePh: 'กรุณาเลือกช่วงอายุ', statusPh: 'กรุณาเลือกสถานภาพ', consentPh: 'กรุณาเลือก',
     errGender: 'กรุณาเลือกเพศ', errAge: 'กรุณาเลือกช่วงอายุ', errStatus: 'กรุณาเลือกสถานภาพ',
     errConsent: 'กรุณาเลือกว่ายินยอมหรือไม่', errConsentNo: 'ไม่สามารถจองได้หากไม่ยินยอมเข้ารับการบริการ',
-    timeText: (a, b) => `เวลา ${a} - ${b} น.`,
+    timeText: (a, b) => `เวลา ${a}-${b}น.`,
     info: ['กรุณากรอกข้อมูลให้ครบถ้วน', 'เลือกบริการที่ต้องการ', 'เลือกวันที่และช่วงเวลาที่สะดวก',
       'ระบบจะแสดงระยะเวลาที่ใช้บริการโดยอัตโนมัติ', 'หลังยืนยันการจอง คุณจะได้รับการยืนยันทางอีเมล/เบอร์โทรศัพท์', 'แนะนำให้ลูกค้ามาถึงก่อนเวลานัด 5–10 นาที'],
     errName: 'กรุณากรอกชื่อ-สกุล', errPhone: 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง', errEmail: 'รูปแบบอีเมลไม่ถูกต้อง',
@@ -103,7 +103,7 @@ watch(lang, (l) => {
 // TODO: แทนที่ด้วย GET /api/slots?date=YYYY-MM-DD&service=... (ดึงเฉพาะช่วงที่ว่างจริง)
 const slotSets = {
   standard: [['13:00', '14:30'], ['14:30', '16:00'], ['16:00', '17:30'], ['17:30', '19:00']], // Hair & Nail
-  pca: [['13:00', '14:00'], ['14:00', '15:00'], ['15:00', '16:00'], ['17:00', '18:00'], ['18:00', '19:00']], // Personal Color Analysis
+  pca: [['13:00', '14:00'], ['14:00', '15:00'], ['15:00', '16:00'], ['16:00', '17:00'], ['17:00', '18:00'], ['18:00', '19:00']], // Personal Color Analysis
 }
 const fetchSlots = (iso, serviceId) => {
   const svc = services.find((x) => x.id === serviceId)
@@ -125,6 +125,7 @@ const shaking = ref(false)
 
 const slots = computed(() => fetchSlots(form.date, form.serviceId))
 const selectedSlot = computed(() => slots.value.find((s) => s.id === form.slotId))
+const slotLabel = (s) => (lang.value === 'th' ? `${s.start}-${s.end}น.` : `${s.start} - ${s.end}`)
 const duration = computed(() => services.find((x) => x.id === form.serviceId)?.duration ?? null)
 const dateText = computed(() =>
   form.date
@@ -297,7 +298,7 @@ function reset() {
                 <Clock :size="18" />
                 <select v-model="form.slotId" :disabled="!form.serviceId">
                   <option value="" disabled>{{ form.serviceId ? t('slotPh') : t('slotFirst') }}</option>
-                  <option v-for="s in slots" :key="s.id" :value="s.id">{{ s.start }} - {{ s.end }}</option>
+                  <option v-for="s in slots" :key="s.id" :value="s.id">{{ slotLabel(s) }}</option>
                 </select>
                 <ChevronDown :size="18" />
               </span>
