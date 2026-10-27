@@ -4,10 +4,16 @@ import {
   Calendar, Clock, FileText, User, Phone, Mail, MessageSquare,
   ChevronDown, Check, Info, Globe, Users, Cake, GraduationCap, ShieldCheck,
 } from 'lucide-vue-next'
+import LoginView from './LoginView.vue'
+import { getSession, logout } from './auth'
 
-/* ---------- API ---------- */
-// แก้พอร์ตให้ตรงกับ backend (ตอนนี้ backend รันที่ 3000)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const user = ref(getSession())
+function onLogin(u) { user.value = u }
+function onLogout() { logout(); user.value = null }
+
+import AdminView from './AdminView.vue'
+import { addBooking, isSlotTaken } from './bookings'
+const isAdmin = computed(() => user.value?.role === 'admin')
 
 /* ---------- mock data (เปลี่ยนเป็นเรียก API ภายหลัง) ---------- */
 const groups = [
@@ -69,13 +75,8 @@ const messages = {
     info: ['กรุณากรอกข้อมูลให้ครบถ้วน', 'เลือกบริการที่ต้องการ', 'เลือกวันที่และช่วงเวลาที่สะดวก',
       'ระบบจะแสดงระยะเวลาที่ใช้บริการโดยอัตโนมัติ', 'หลังยืนยันการจอง คุณจะได้รับการยืนยันทางอีเมล/เบอร์โทรศัพท์', 'แนะนำให้ลูกค้ามาถึงก่อนเวลานัด 5–10 นาที'],
     errName: 'กรุณากรอกชื่อ-สกุล', errPhone: 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง', errEmail: 'รูปแบบอีเมลไม่ถูกต้อง',
-    errService: 'กรุณาเลือกบริการ', errDate: 'กรุณาเลือกวันที่', errSlot: 'กรุณาเลือกช่วงเวลา',
+    errService: 'กรุณาเลือกบริการ', errDate: 'กรุณาเลือกวันที่', errSlot: 'กรุณาเลือกช่วงเวลา', errSlotFull: 'ช่วงเวลานี้มีผู้จองแล้ว กรุณาเลือกช่วงอื่น', slotFull: '(เต็มแล้ว)',
     cancelTitle: 'การยกเลิกการจอง', cancelText: 'หากต้องการยกเลิก กรุณาโทรแจ้งร้านล่วงหน้าอย่างน้อย 24 ชั่วโมง', contactLabel: 'เบอร์ติดต่อ', arriveTip: 'แนะนำให้ลูกค้ามาถึงก่อนเวลานัด 5–10 นาที',
-    saveFail: 'บันทึกการจองไม่สำเร็จ กรุณาลองอีกครั้ง',
-    alertErrTitle: 'จองไม่สำเร็จ', alertTakenTitle: 'ช่วงเวลานี้ถูกจองแล้ว',
-    errTaken: 'มีลูกค้าท่านอื่นจองช่วงเวลานี้ไปแล้ว หรือเลยเวลาแล้ว กรุณาเลือกช่วงเวลาอื่น',
-    errInvalid: 'ข้อมูลบางส่วนไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
-    errNetwork: 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง', ok: 'ตกลง',
   },
   en: {
     title: 'BTT Beauty Space', subtitle: 'Fill in your details to book a service',
@@ -94,13 +95,8 @@ const messages = {
     info: ['Fill in all required fields', 'Choose the service you want', 'Pick a date and a time that suits you',
       'The service duration is shown automatically', "After you confirm, you'll receive confirmation by email or phone", 'We recommend arriving 5–10 minutes before your appointment'],
     errName: 'Please enter your full name', errPhone: 'Please enter a valid phone number', errEmail: 'Email format is not valid',
-    errService: 'Please select a service', errDate: 'Please select a date', errSlot: 'Please select a time',
+    errService: 'Please select a service', errDate: 'Please select a date', errSlot: 'Please select a time', errSlotFull: 'This time is already booked. Please choose another', slotFull: '(full)',
     cancelTitle: 'Cancellation', cancelText: 'To cancel, please call the shop at least 24 hours in advance.', contactLabel: 'Contact', arriveTip: 'We recommend arriving 5–10 minutes before your appointment',
-    saveFail: 'Could not save your booking. Please try again.',
-    alertErrTitle: 'Booking failed', alertTakenTitle: 'This time slot is taken',
-    errTaken: 'Someone else has already booked this time, or it has passed. Please choose another time.',
-    errInvalid: 'Some details are not valid. Please check and try again.',
-    errNetwork: 'Cannot reach the server. Please check your connection and try again.', ok: 'OK',
   },
 }
 const shopPhone = '099-999-999'
@@ -136,14 +132,16 @@ const errors = reactive({})
 const submitting = ref(false)
 const done = ref(false)
 const shaking = ref(false)
-const alertBox = reactive({ open: false, title: '', text: '' })
-const showAlert = (titleKey, textKey) => {
-  alertBox.title = titleKey
-  alertBox.text = textKey
-  alertBox.open = true
-}
 
-const slots = computed(() => fetchSlots(form.date, form.serviceId))
+const tick = ref(0)
+const slots = computed(() => {
+  void tick.value
+  const g = services.find((x) => x.id === form.serviceId)?.group
+  return fetchSlots(form.date, form.serviceId).map((s) => ({
+    ...s,
+    taken: !!g && isSlotTaken(g, form.date, s.start),
+  }))
+})
 const selectedSlot = computed(() => slots.value.find((s) => s.id === form.slotId))
 const slotLabel = (s) => (lang.value === 'th' ? `${s.start}-${s.end}น.` : `${s.start} - ${s.end}`)
 const duration = computed(() => services.find((x) => x.id === form.serviceId)?.duration ?? null)
@@ -168,6 +166,7 @@ function validate() {
   if (!form.serviceId) errors.serviceId = 'errService'
   if (!form.date) errors.date = 'errDate'
   if (!form.slotId) errors.slotId = 'errSlot'
+  else if (slots.value.find((s) => s.id === form.slotId)?.taken) errors.slotId = 'errSlotFull'
   return Object.keys(errors).length === 0
 }
 async function submit() {
@@ -178,36 +177,29 @@ async function submit() {
   }
   submitting.value = true
   try {
-    const slot = selectedSlot.value
-    const res = await fetch(`${API_URL}/api/bookings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...form,
-        slotStart: slot?.start,
-        slotEnd: slot?.end,
-        durationMin: duration.value,
-      }),
+    // TODO: await fetch('/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, durationMin: duration.value }) })
+    await new Promise((r) => setTimeout(r, 600))
+    const svc = services.find((x) => x.id === form.serviceId)
+    addBooking({
+      group: svc.group,
+      serviceId: svc.id,
+      serviceName: svc.name.th,
+      durationMin: svc.duration,
+      date: form.date,
+      start: selectedSlot.value.start,
+      end: selectedSlot.value.end,
+      name: form.name.trim(),
+      phone: form.phone,
+      email: form.email,
+      note: form.note,
+      gender: form.gender,
+      age: form.age,
+      occupation: form.status,
+      consent: form.consent,
     })
-    if (res.status === 409) {
-      // ช่วงเวลาถูกจองไปแล้ว → ให้เลือกเวลาใหม่
-      form.slotId = ''
-      showAlert('alertTakenTitle', 'errTaken')
-      return
-    }
-    if (res.status === 400) {
-      showAlert('alertErrTitle', 'errInvalid')
-      return
-    }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    tick.value++
     done.value = true
-  } catch (e) {
-    console.error('จองไม่สำเร็จ:', e)
-    const offline = e instanceof TypeError // fetch เชื่อมต่อไม่ได้
-    showAlert('alertErrTitle', offline ? 'errNetwork' : 'saveFail')
-  } finally {
-    submitting.value = false
-  }
+  } finally { submitting.value = false }
 }
 function reset() {
   Object.assign(form, { name: '', phone: '', email: '', note: '', gender: '', age: '', status: '', consent: '', serviceId: '', date: todayISO, slotId: '' })
@@ -216,7 +208,8 @@ function reset() {
 </script>
 
 <template>
-  <div class="page">
+  <LoginView v-if="!user" @login="onLogin" />
+  <div v-else class="page">
     <header class="card header">
       <span class="logo"><Calendar :size="28" /></span>
       <div class="grow">
@@ -231,9 +224,14 @@ function reset() {
           <button type="button" :class="{ on: lang === 'en' }" :aria-pressed="lang === 'en'" @click="lang = 'en'">EN</button>
         </span>
       </div>
+      <div class="who">
+        <span class="who-name">{{ user.name }}</span>
+        <span class="role" :class="user.role">{{ user.role === 'admin' ? 'Admin' : 'User' }}</span>
+        <button type="button" class="logout" @click="onLogout">ออก</button>
+      </div>
     </header>
 
-    <main class="layout">
+    <main v-if="!isAdmin" class="layout">
       <section class="card">
         <Transition name="swap" mode="out-in">
         <div v-if="done" class="success" role="status">
@@ -344,7 +342,7 @@ function reset() {
                 <Clock :size="18" />
                 <select v-model="form.slotId" :disabled="!form.serviceId">
                   <option value="" disabled>{{ form.serviceId ? t('slotPh') : t('slotFirst') }}</option>
-                  <option v-for="s in slots" :key="s.id" :value="s.id">{{ slotLabel(s) }}</option>
+                  <option v-for="s in slots" :key="s.id" :value="s.id" :disabled="s.taken">{{ slotLabel(s) }}{{ s.taken ? ' ' + t('slotFull') : '' }}</option>
                 </select>
                 <ChevronDown :size="18" />
               </span>
@@ -391,16 +389,8 @@ function reset() {
       </aside>
     </main>
 
-    <Transition name="modal">
-      <div v-if="alertBox.open" class="overlay" @click.self="alertBox.open = false">
-        <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlg-title" aria-describedby="dlg-text">
-          <span class="dlg-icon" aria-hidden="true">!</span>
-          <h3 id="dlg-title">{{ t(alertBox.title) }}</h3>
-          <p id="dlg-text">{{ t(alertBox.text) }}</p>
-          <button class="btn inline" type="button" @click="alertBox.open = false">{{ t('ok') }}</button>
-        </div>
-      </div>
-    </Transition>
+    <AdminView v-else />
+
   </div>
 </template>
 
@@ -565,28 +555,6 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
 .tick { position: relative; animation: pop .5s .1s cubic-bezier(.3, 1.4, .5, 1) both; }
 .tick::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--brand); animation: ring .9s .45s ease-out both; }
 
-/* ---------- กล่องแจ้งเตือน (แทน alert ของเบราว์เซอร์) ---------- */
-.overlay {
-  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px;
-  background: rgba(43, 26, 38, .45); backdrop-filter: blur(3px);
-}
-.dialog {
-  width: min(100%, 400px); display: grid; justify-items: center; gap: 8px; padding: 32px 28px 28px;
-  border-radius: 20px; background: #fff; text-align: center; box-shadow: 0 20px 60px rgba(43, 26, 38, .3);
-}
-.dialog h3 { margin: 6px 0 0; font-size: 1.15rem; font-weight: 700; }
-.dialog p { margin: 0; color: var(--muted); font-size: .95rem; }
-.dlg-icon {
-  display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%;
-  background: var(--brand-soft); color: var(--brand); font-size: 1.9rem; font-weight: 700; line-height: 1;
-}
-.dialog .btn.inline { margin-top: 16px; min-width: 140px; }
-.modal-enter-active, .modal-leave-active { transition: opacity .2s; }
-.modal-enter-active .dialog, .modal-leave-active .dialog { transition: transform .25s cubic-bezier(.3, 1.3, .5, 1); }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
-.modal-enter-from .dialog { transform: scale(.9) translateY(10px); }
-.modal-leave-to .dialog { transform: scale(.95); }
-
 @media (prefers-reduced-motion: reduce) {
   .page, .page *, .page *::before, .page *::after { animation: none !important; transition-duration: .01ms !important; }
 }
@@ -629,4 +597,12 @@ body { margin: 0; padding: 0; display: block; min-width: 320px; }
   .success { padding: 36px 0; }
   .info ul { font-size: .92rem; }
 }
+
+.header { flex-wrap: wrap; }
+.who { display: flex; align-items: center; gap: 8px; font-size: .88rem; }
+.who-name { font-weight: 600; }
+.role { padding: 2px 10px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-dark); font-size: .75rem; font-weight: 600; }
+.role.admin { background: var(--brand); color: #fff; }
+.logout { min-height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--muted); font: inherit; cursor: pointer; }
+.logout:hover { color: var(--brand-dark); border-color: var(--brand); }
 </style>
